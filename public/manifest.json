@@ -1,13 +1,13 @@
 {
-  "name": "Dice",
+  "name": "Darqie dice",
   "version": "2.0.0",
   "manifest_version": 1,
-  "author": "Owlbear Rodeo",
+  "author": "Darqie",
   "homepage_url": "https://extensions.owlbear.rodeo/dice",
   "icon": "/logo.png",
-  "description": "Beautiful 3D dice extension for d20 based systems",
+  "description": "Owlbear Rodeo extension for Darqie character sheet",
   "action": {
-    "title": "Dice",
+    "title": "Darqie dice",
     "icon": "/icon.svg",
     "popover": "/",
     "height": 700,
