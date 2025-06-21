@@ -34,6 +34,21 @@ export function DiceRollSync() {
       
       // Виконуємо кидок
       diceRollState.startRoll(roll);
+      
+      // Очищаємо запит після виконання
+      try {
+        const currentMetadata = await OBR.room.getMetadata();
+        const updatedMetadata = { 
+          ...currentMetadata, 
+          darqie: { 
+            ...(currentMetadata.darqie || {}), 
+            activeRoll: null 
+          } 
+        };
+        await OBR.room.setMetadata(updatedMetadata);
+      } catch (error) {
+        console.error("🎲 [DICE] Error clearing roll request:", error);
+      }
     }
   };
   
@@ -45,9 +60,16 @@ export function DiceRollSync() {
         return;
       }
       
-      const handleRoomMetadataChange = async (metadata: { darqie?: { activeRoll?: { type: string; style: string; bonus?: number } } }) => {
+      const handleRoomMetadataChange = async (metadata: { darqie?: { activeRoll?: { type: string; style: string; bonus?: number; connectionId?: string; playerName?: string } } }) => {
         if (metadata.darqie?.activeRoll) {
           const rollRequest = metadata.darqie.activeRoll;
+          
+          // Перевіряємо, чи цей запит призначений для поточного гравця
+          const currentConnectionId = await OBR.player.getConnectionId();
+          if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
+            // Цей запит не для нас, ігноруємо його
+            return;
+          }
           
           // Налаштовуємо кубики через нову функцію
           const { useDiceControlsStore } = await import("../controls/store");
