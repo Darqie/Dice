@@ -55,33 +55,44 @@ export function DiceRollSync() {
   
   // Слухаємо зміни метаданів кімнати для запитів від листа персонажа
   useEffect(() => {
-    console.log("🎲 [DICE] DiceRollSync: Setting up room metadata listener");
+    console.log("🎲 [DICE] DiceRollSync: Waiting for OBR to be ready...");
     
-    const handleRoomMetadataChange = async (metadata: any) => {
-      console.log("🎲 [DICE] DiceRollSync: Room metadata changed:", metadata);
-      
-      if (metadata.darqie?.activeRoll) {
-        const rollRequest = metadata.darqie.activeRoll;
-        console.log("🎲 [DICE] DiceRollSync: Processing roll request:", rollRequest);
+    const waitForOBR = async () => {
+      try {
+        await OBR.onReady();
+        console.log("🎲 [DICE] DiceRollSync: OBR is ready, setting up room metadata listener");
         
-        // Налаштовуємо кубики через нову функцію
-        const { useDiceControlsStore } = await import("../controls/store");
-        const diceControlsState = useDiceControlsStore.getState();
-        diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
+        const handleRoomMetadataChange = async (metadata: any) => {
+          console.log("🎲 [DICE] DiceRollSync: Room metadata changed:", metadata);
+          
+          if (metadata.darqie?.activeRoll) {
+            const rollRequest = metadata.darqie.activeRoll;
+            console.log("🎲 [DICE] DiceRollSync: Processing roll request:", rollRequest);
+            
+            // Налаштовуємо кубики через нову функцію
+            const { useDiceControlsStore } = await import("../controls/store");
+            const diceControlsState = useDiceControlsStore.getState();
+            diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
+            
+            // Виконуємо кидок через невелику затримку
+            setTimeout(() => {
+              executeAutoRoll(rollRequest);
+            }, 1000);
+          }
+        };
         
-        // Виконуємо кидок через невелику затримку
-        setTimeout(() => {
-          executeAutoRoll(rollRequest);
-        }, 1000);
+        const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
+        
+        return () => {
+          console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
+          unsubscribe();
+        };
+      } catch (error) {
+        console.error("🎲 [DICE] DiceRollSync: Error waiting for OBR:", error);
       }
     };
     
-    const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
-    
-    return () => {
-      console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
-      unsubscribe();
-    };
+    waitForOBR();
   }, []);
   
   useEffect(
