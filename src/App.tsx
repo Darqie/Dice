@@ -13,39 +13,23 @@ export function App() {
   const { startRoll } = useDiceRollStore();
 
   useEffect(() => {
-    console.log("🎲 [DICE] App component mounted, waiting for OBR to be ready...");
-    
     const setupMetadataListener = () => {
-      console.log("🎲 [DICE] OBR is ready, setting up metadata listener");
-      
       const handleMetadataChange = async (metadata: any) => {
-        console.log("🎲 [DICE] Metadata changed:", metadata);
-        
-        // Перевіряємо чи є запит від листа персонажа
         if (metadata.darqie?.activeRoll) {
           const rollRequest = metadata.darqie.activeRoll;
-          console.log("🎲 [DICE] Received roll request from character sheet:", rollRequest);
+          console.log('[DICE] Roll request:', rollRequest);
           
           try {
-            // Відкриваємо розширення кубиків
-            console.log("🎲 [DICE] Opening dice extension...");
             await OBR.action.open();
             
-            // Налаштовуємо кубики відповідно до запиту
-            console.log("🎲 [DICE] Configuring dice for request:", rollRequest);
             setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
             
-            // Автоматично виконуємо кидок через 500мс
             setTimeout(() => {
-              console.log("🎲 [DICE] Auto-executing roll...");
               const currentState = useDiceControlsStore.getState();
               const diceToRoll = currentState.diceCounts;
               const hasDice = Object.values(diceToRoll).some((count: any) => count > 0);
               
               if (hasDice) {
-                console.log("🎲 [DICE] Dice configured, starting roll");
-                // Тут потрібно буде викликати startRoll з правильними параметрами
-                // Поки що просто логуємо
                 console.log("🎲 [DICE] Roll would be executed with:", {
                   diceCounts: diceToRoll,
                   bonus: rollRequest.bonus,
@@ -62,17 +46,13 @@ export function App() {
         }
       };
 
-      // Підписуємося на зміни метаданів
-      console.log("🎲 [DICE] Subscribing to room metadata changes");
       const unsubscribe = OBR.room.onMetadataChange(handleMetadataChange);
       
       return () => {
-        console.log("🎲 [DICE] Unsubscribing from metadata changes");
         unsubscribe();
       };
     };
     
-    // Використовуємо OBR.onReady з колбек-функцією
     OBR.onReady(() => {
       setupMetadataListener();
     });
