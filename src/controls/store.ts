@@ -120,6 +120,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     setupDiceFromRequest(type, style, bonus) {
+      console.log('[CONTROLS] setupDiceFromRequest викликано:', { type, style, bonus });
       set((state) => {
         // Скидаємо поточний стан
         state.diceCounts = state.defaultDiceCounts;
@@ -127,49 +128,54 @@ export const useDiceControlsStore = create<DiceControlsState>()(
         state.diceAdvantage = null;
         state.diceHidden = false;
         
-        // Знаходимо набір кубиків з відповідним стилем
-        const targetDiceSet = diceSets.find(set => 
-          set.dice.some(die => die.style === style)
-        );
+        console.log('[CONTROLS] Поточний diceSet:', state.diceSet.name);
         
-        if (targetDiceSet) {
-          // Змінюємо набір кубиків
-          const counts: DiceCounts = {};
-          const prevCounts = state.diceCounts;
-          const prevDice = state.diceSet.dice;
+        // Знаходимо кубик потрібного типу в поточному наборі
+        const targetDie = state.diceSet.dice.find(die => die.type === type);
+        if (targetDie) {
+          state.diceCounts[targetDie.id] = 1;
+          console.log('[CONTROLS] Додано кубик до поточного набору:', targetDie.type, targetDie.id);
+        } else {
+          console.error("🎲 [DICE] Target die type not found in current set:", type);
           
-          for (let i = 0; i < targetDiceSet.dice.length; i++) {
-            const die = targetDiceSet.dice[i];
-            const prevDie = prevDice[i];
-            // Carry over count if the index and die type match
-            if (prevDie && prevDie.type === die.type) {
-              counts[die.id] = prevCounts[prevDie.id] || 0;
-            } else {
-              counts[die.id] = 0;
+          // Якщо не знайшли в поточному наборі, спробуємо знайти набір з потрібним стилем
+          const targetDiceSet = diceSets.find(set => 
+            set.dice.some(die => die.style === style)
+          );
+          
+          if (targetDiceSet) {
+            console.log('[CONTROLS] Змінюємо набір на:', targetDiceSet.name);
+            // Змінюємо набір кубиків
+            const counts: DiceCounts = {};
+            const prevCounts = state.diceCounts;
+            const prevDice = state.diceSet.dice;
+            
+            for (let i = 0; i < targetDiceSet.dice.length; i++) {
+              const die = targetDiceSet.dice[i];
+              const prevDie = prevDice[i];
+              // Carry over count if the index and die type match
+              if (prevDie && prevDie.type === die.type) {
+                counts[die.id] = prevCounts[prevDie.id] || 0;
+              } else {
+                counts[die.id] = 0;
+              }
+            }
+            
+            state.diceCounts = counts;
+            state.diceSet = targetDiceSet;
+            state.defaultDiceCounts = getDiceCountsFromSet(targetDiceSet);
+            state.diceById = getDiceByIdFromSet(targetDiceSet);
+            
+            // Знаходимо кубик потрібного типу і додаємо його
+            const newTargetDie = targetDiceSet.dice.find(die => die.type === type);
+            if (newTargetDie) {
+              state.diceCounts[newTargetDie.id] = 1;
+              console.log('[CONTROLS] Додано кубик:', newTargetDie.type, newTargetDie.id);
             }
           }
-          
-          state.diceCounts = counts;
-          state.diceSet = targetDiceSet;
-          state.defaultDiceCounts = getDiceCountsFromSet(targetDiceSet);
-          state.diceById = getDiceByIdFromSet(targetDiceSet);
-          
-          // Знаходимо кубик потрібного типу і додаємо його
-          const targetDie = targetDiceSet.dice.find(die => die.type === type);
-          if (targetDie) {
-            state.diceCounts[targetDie.id] = 1;
-          } else {
-            console.error("🎲 [DICE] Target die type not found:", type);
-          }
-        } else {
-          console.error("🎲 [DICE] Dice set with style not found:", style);
-          
-          // Якщо не знайшли набір, спробуємо знайти кубик потрібного типу в поточному наборі
-          const targetDie = state.diceSet.dice.find(die => die.type === type);
-          if (targetDie) {
-            state.diceCounts[targetDie.id] = 1;
-          }
         }
+        
+        console.log('[CONTROLS] Фінальний diceCounts:', state.diceCounts);
       });
     },
   }))
