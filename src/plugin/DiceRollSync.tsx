@@ -35,6 +35,16 @@ export function DiceRollSync() {
       // Виконуємо кидок
       diceRollState.startRoll(roll);
       
+      // Показуємо результат через сповіщення
+      const playerName = await OBR.player.getName();
+      const rollType = rollRequest.type;
+      const bonus = rollRequest.bonus || 0;
+      
+      await OBR.notification.show(
+        `Кидок ${rollType} +${bonus} виконано!`,
+        'INFO'
+      );
+      
       // Очищаємо запит після виконання
       try {
         const currentMetadata = await OBR.room.getMetadata();
@@ -66,25 +76,11 @@ export function DiceRollSync() {
           
           // Перевіряємо, чи цей запит призначений для поточного гравця
           const currentConnectionId = await OBR.player.getConnectionId();
-          const currentPlayerName = await OBR.player.getName();
-          const currentRole = await OBR.player.getRole();
-          
-          console.log("🎲 [DICE] Roll request received:", {
-            requestConnectionId: rollRequest.connectionId,
-            currentConnectionId: currentConnectionId,
-            requestPlayerName: rollRequest.playerName,
-            currentPlayerName: currentPlayerName,
-            currentRole: currentRole,
-            isMatch: rollRequest.connectionId === currentConnectionId
-          });
           
           if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
             // Цей запит не для нас, ігноруємо його
-            console.log("🎲 [DICE] Ignoring roll request - not for this player");
             return;
           }
-          
-          console.log("🎲 [DICE] Processing roll request for current player");
           
           // Налаштовуємо кубики через нову функцію
           const { useDiceControlsStore } = await import("../controls/store");
