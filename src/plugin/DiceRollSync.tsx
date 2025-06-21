@@ -11,6 +11,8 @@ export function DiceRollSync() {
   
   // Функція для автоматичного виконання кидків
   const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
+    console.log('[DICE] executeAutoRoll початок:', new Date().toISOString());
+    
     const { useDiceControlsStore } = await import("../controls/store");
     const { useDiceRollStore } = await import("../dice/store");
     
@@ -24,6 +26,8 @@ export function DiceRollSync() {
       diceControlsState.diceById
     );
     
+    console.log('[DICE] executeAutoRoll', rollRequest, diceToRoll);
+    
     if (diceToRoll.length > 0) {
       // Створюємо об'єкт кидку
       const roll = {
@@ -34,6 +38,7 @@ export function DiceRollSync() {
       
       // Виконуємо кидок
       diceRollState.startRoll(roll);
+      console.log('[DICE] startRoll викликано', roll);
       
       // Показуємо результат через сповіщення
       const playerName = await OBR.player.getName();
@@ -44,6 +49,8 @@ export function DiceRollSync() {
         `Кидок ${rollType} +${bonus} виконано!`,
         'INFO'
       );
+      
+      console.log('[DICE] executeAutoRoll завершено:', new Date().toISOString());
       
       // Очищаємо запит після виконання
       try {
@@ -118,6 +125,7 @@ export function DiceRollSync() {
         if (!state.roll) {
           changed = true;
           prevIds.current = [];
+          console.log('[DICE] Стан кидка скинуто');
         } else {
           const ids = getDieFromDice(state.roll).map((die) => die.id);
           // Check array length for early change check
@@ -133,6 +141,7 @@ export function DiceRollSync() {
             Object.values(state.rollValues).every((value) => value !== null)
           ) {
             changed = true;
+            console.log('[DICE] Кидок завершено, результати:', state.rollValues);
           }
           prevIds.current = ids;
         }
@@ -156,6 +165,10 @@ export function DiceRollSync() {
             [getPluginId("rollTransforms")]: transforms,
             [getPluginId("rollPlayer")]: currentPlayerName,
           });
+          
+          if (state.rollValues && Object.values(state.rollValues).some(v => v !== null)) {
+            console.log('[DICE] Метадані оновлено з результатами:', values);
+          }
         }
       }),
     []
