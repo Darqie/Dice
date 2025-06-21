@@ -4,6 +4,7 @@ import { useDiceRollStore } from "../dice/store";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { getPluginId } from "./getPluginId";
 import { getDiceToRoll } from "../controls/store";
+import { useDiceControlsStore } from "../controls/store";
 
 /** Sync the current dice roll to the plugin */
 export function DiceRollSync() {
@@ -12,9 +13,6 @@ export function DiceRollSync() {
   // Функція для автоматичного виконання кидків
   const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
     console.log('[DICE] executeAutoRoll викликано:', rollRequest);
-    
-    const { useDiceControlsStore } = await import("../controls/store");
-    const { useDiceRollStore } = await import("../dice/store");
     
     const diceControlsState = useDiceControlsStore.getState();
     const diceRollState = useDiceRollStore.getState();
@@ -94,7 +92,6 @@ export function DiceRollSync() {
           console.log('[DICE] Запит для поточного гравця, обробляємо');
           
           // Налаштовуємо кубики через нову функцію
-          const { useDiceControlsStore } = await import("../controls/store");
           const diceControlsState = useDiceControlsStore.getState();
           diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus || 0);
           
