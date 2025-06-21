@@ -140,26 +140,13 @@ export function DiceRollSync() {
           // Отримуємо ім'я поточного гравця
           const currentPlayerName = await OBR.player.getName();
           
-          // Відправляємо повідомлення всім гравцям про кидок
-          try {
-            await OBR.broadcast.sendMessage('dice-roll', {
-              roll: state.roll,
-              rollThrows: throws,
-              rollValues: values,
-              rollTransforms: transforms,
-              playerName: currentPlayerName,
-              timestamp: Date.now()
-            });
-          } catch (error) {
-            console.error("🎲 [DICE] Error sending broadcast message:", error);
-          }
-          
-          // Також зберігаємо в локальних метаданих для синхронізації
+          // Зберігаємо в локальних метаданих для синхронізації
           OBR.player.setMetadata({
             [getPluginId("roll")]: state.roll,
             [getPluginId("rollThrows")]: throws,
             [getPluginId("rollValues")]: values,
             [getPluginId("rollTransforms")]: transforms,
+            [getPluginId("rollPlayer")]: currentPlayerName,
           });
         }
       }),
