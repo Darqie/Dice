@@ -20,8 +20,21 @@ export function App() {
           
           // Перевіряємо, чи цей запит призначений для поточного гравця
           const currentConnectionId = await OBR.player.getConnectionId();
+          const currentPlayerName = await OBR.player.getName();
+          const currentRole = await OBR.player.getRole();
+          
+          console.log("🎲 [DICE] App: Roll request received:", {
+            requestConnectionId: rollRequest.connectionId,
+            currentConnectionId: currentConnectionId,
+            requestPlayerName: rollRequest.playerName,
+            currentPlayerName: currentPlayerName,
+            currentRole: currentRole,
+            isMatch: rollRequest.connectionId === currentConnectionId
+          });
+          
           if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
             // Цей запит не для нас, ігноруємо його
+            console.log("🎲 [DICE] App: Ignoring roll request - not for this player");
             return;
           }
           
