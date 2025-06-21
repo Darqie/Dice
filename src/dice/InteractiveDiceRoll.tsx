@@ -29,6 +29,48 @@ export function InteractiveDiceRoll() {
     []
   );
 
+  // Додатковий обробник для автоматичних кидків
+  const handleRollFinished = (id: string, number: number, transform: DiceTransform) => {
+    console.log('[DICE] InteractiveDiceRoll: Кидок завершено для кубика:', id, 'значення:', number);
+    
+    // Викликаємо стандартний finishDieRoll
+    finishDieRoll(id, number, transform);
+    
+    // Додатково перевіряємо чи всі кубики завершили анімацію
+    const currentState = useDiceRollStore.getState();
+    const allFinished = Object.values(currentState.rollValues).every((value) => value !== null);
+    
+    if (allFinished) {
+      console.log('[DICE] InteractiveDiceRoll: Всі кубики завершили анімацію!');
+      
+      // Якщо це автоматичний кидок, очищаємо запит
+      if (roll && roll.hidden === false && roll.bonus !== undefined) {
+        // Це може бути автоматичний кидок - очищаємо запит через невелику затримку
+        setTimeout(async () => {
+          try {
+            // Імпортуємо OBR динамічно щоб уникнути проблем з типами
+            const OBR = await import("@owlbear-rodeo/sdk");
+            const currentMetadata = await OBR.room.getMetadata();
+            const darqie = currentMetadata.darqie as any;
+            if (darqie && darqie.activeRoll) {
+              const updatedMetadata = { 
+                ...currentMetadata, 
+                darqie: { 
+                  ...darqie, 
+                  activeRoll: null 
+                } 
+              };
+              await OBR.room.setMetadata(updatedMetadata);
+              console.log('[DICE] InteractiveDiceRoll: Запит автоматичного кидку очищено');
+            }
+          } catch (error) {
+            console.error("🎲 [DICE] InteractiveDiceRoll: Error clearing auto roll request:", error);
+          }
+        }, 500);
+      }
+    }
+  };
+
   if (!roll) {
     return null;
   }
@@ -38,7 +80,7 @@ export function InteractiveDiceRoll() {
       roll={roll}
       rollThrows={rollThrows}
       finishedTransforms={finishedTransforms}
-      onRollFinished={finishDieRoll}
+      onRollFinished={handleRollFinished}
       Dice={InteractiveDice}
       transformsRef={transformsRef}
     />
