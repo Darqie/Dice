@@ -17,6 +17,14 @@ export function App() {
       const handleMetadataChange = async (metadata: any) => {
         if (metadata.darqie?.activeRoll) {
           const rollRequest = metadata.darqie.activeRoll;
+          
+          // Перевіряємо, чи цей запит призначений для поточного гравця
+          const currentConnectionId = await OBR.player.getConnectionId();
+          if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
+            // Цей запит не для нас, ігноруємо його
+            return;
+          }
+          
           console.log('[DICE] Roll request:', rollRequest);
           
           try {
@@ -24,7 +32,7 @@ export function App() {
             
             setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
             
-            setTimeout(() => {
+            setTimeout(async () => {
               const currentState = useDiceControlsStore.getState();
               const diceToRoll = currentState.diceCounts;
               const hasDice = Object.values(diceToRoll).some((count: any) => count > 0);
@@ -37,6 +45,21 @@ export function App() {
                 });
               } else {
                 console.error("🎲 [DICE] No dice configured for roll");
+              }
+              
+              // Очищаємо запит після обробки
+              try {
+                const currentMetadata = await OBR.room.getMetadata();
+                const updatedMetadata = { 
+                  ...currentMetadata, 
+                  darqie: { 
+                    ...(currentMetadata.darqie || {}), 
+                    activeRoll: null 
+                  } 
+                };
+                await OBR.room.setMetadata(updatedMetadata);
+              } catch (error) {
+                console.error("🎲 [DICE] Error clearing roll request:", error);
               }
             }, 500);
             
