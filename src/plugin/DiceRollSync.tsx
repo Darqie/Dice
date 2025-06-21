@@ -19,6 +19,9 @@ export function DiceRollSync() {
     const diceControlsState = useDiceControlsStore.getState();
     const diceRollState = useDiceRollStore.getState();
     
+    console.log('[DICE] diceControlsState:', diceControlsState);
+    console.log('[DICE] diceRollState:', diceRollState);
+    
     // Отримуємо кубики для кидку
     const diceToRoll = getDiceToRoll(
       diceControlsState.diceCounts,
@@ -36,9 +39,15 @@ export function DiceRollSync() {
         hidden: false
       };
       
+      console.log('[DICE] Створено roll об\'єкт:', roll);
+      
       // Виконуємо кидок
-      diceRollState.startRoll(roll);
-      console.log('[DICE] startRoll викликано');
+      try {
+        diceRollState.startRoll(roll);
+        console.log('[DICE] startRoll викликано успішно');
+      } catch (error) {
+        console.error('[DICE] Помилка при виклику startRoll:', error);
+      }
       
       // Очищаємо запит після виконання
       try {
