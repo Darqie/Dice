@@ -67,6 +67,8 @@ export function DiceRollSync() {
         return () => {
           unsubscribe();
         };
+      } catch (error) {
+        console.error("🎲 [DICE] DiceRollSync: Error setting up metadata listener:", error);
       }
     };
     
