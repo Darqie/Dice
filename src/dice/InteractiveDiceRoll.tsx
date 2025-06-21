@@ -3,7 +3,6 @@ import { DiceTransform } from "../types/DiceTransform";
 import { DiceRoll } from "./DiceRoll";
 import { InteractiveDice } from "./InteractiveDice";
 import { useDiceRollStore } from "./store";
-import OBR from "@owlbear-rodeo/sdk";
 
 /** Dice roll based off of the values from the dice roll store */
 export function InteractiveDiceRoll() {
@@ -30,35 +29,6 @@ export function InteractiveDiceRoll() {
     []
   );
 
-  // Очищення запиту автоматичного кидку після завершення анімації
-  useEffect(() => {
-    const checkAndClearRollRequest = async () => {
-      if (finishedTransforms && roll) {
-        console.log('[INTERACTIVE] Всі кубики завершили анімацію, перевіряємо чи потрібно очистити запит');
-        
-        try {
-          const currentMetadata = await OBR.room.getMetadata();
-          if (currentMetadata.darqie?.activeRoll) {
-            console.log('[INTERACTIVE] Очищаємо запит автоматичного кидку');
-            const updatedMetadata = { 
-              ...currentMetadata, 
-              darqie: { 
-                ...(currentMetadata.darqie || {}), 
-                activeRoll: null 
-              } 
-            };
-            await OBR.room.setMetadata(updatedMetadata);
-            console.log('[INTERACTIVE] Запит очищено успішно');
-          }
-        } catch (error) {
-          console.error("[INTERACTIVE] Error clearing roll request:", error);
-        }
-      }
-    };
-
-    checkAndClearRollRequest();
-  }, [finishedTransforms, roll]);
-
   if (!roll) {
     return null;
   }
@@ -73,4 +43,4 @@ export function InteractiveDiceRoll() {
       transformsRef={transformsRef}
     />
   );
-}
+} 
