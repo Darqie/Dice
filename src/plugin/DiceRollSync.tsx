@@ -25,14 +25,36 @@ export function DiceRollSync() {
     // Налаштовуємо кубики через нову функцію
     diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus || 0);
     
+    // Отримуємо оновлений стан після налаштування
+    const updatedDiceControlsState = useDiceControlsStore.getState();
+    console.log('[DICE] Оновлений diceControlsState після setupDiceFromRequest:', {
+      diceCounts: updatedDiceControlsState.diceCounts,
+      diceById: updatedDiceControlsState.diceById,
+      diceAdvantage: updatedDiceControlsState.diceAdvantage
+    });
+    
+    // Конвертуємо Proxy об'єкти у звичайні об'єкти
+    const normalCounts = { ...updatedDiceControlsState.diceCounts };
+    const normalDiceById = { ...updatedDiceControlsState.diceById };
+    
+    console.log('[DICE] Конвертовані об\'єкти:', {
+      normalCounts,
+      normalDiceById: Object.keys(normalDiceById)
+    });
+    
     // Отримуємо кубики для кидку
     const diceToRoll = getDiceToRoll(
-      diceControlsState.diceCounts,
-      diceControlsState.diceAdvantage,
-      diceControlsState.diceById
+      normalCounts,
+      updatedDiceControlsState.diceAdvantage,
+      normalDiceById
     );
     
     console.log('[DICE] diceToRoll:', diceToRoll);
+    console.log('[DICE] Параметри для getDiceToRoll:', {
+      counts: updatedDiceControlsState.diceCounts,
+      advantage: updatedDiceControlsState.diceAdvantage,
+      diceById: Object.keys(updatedDiceControlsState.diceById)
+    });
     
     if (diceToRoll.length > 0) {
       // Створюємо об'єкт кидку
@@ -79,6 +101,10 @@ export function DiceRollSync() {
       }
     } else {
       console.log('[DICE] Немає кубиків для кидку');
+      console.log('[DICE] Детальна діагностика:');
+      console.log('[DICE] - diceCounts:', updatedDiceControlsState.diceCounts);
+      console.log('[DICE] - diceById keys:', Object.keys(updatedDiceControlsState.diceById));
+      console.log('[DICE] - diceAdvantage:', updatedDiceControlsState.diceAdvantage);
       
       // Очищаємо запит якщо немає кубиків
       try {
