@@ -45,11 +45,32 @@ export function DiceRollSync() {
         console.log('[DICE] startRoll функція:', diceRollState.startRoll);
         diceRollState.startRoll(roll);
         console.log('[DICE] startRoll викликано успішно');
+        
+        // НЕ очищаємо запит одразу - чекаємо завершення анімації
+        console.log('[DICE] Чекаємо завершення анімації...');
       } catch (error) {
         console.error('[DICE] Помилка при виклику startRoll:', error);
+        
+        // Очищаємо запит тільки при помилці
+        try {
+          const currentMetadata = await OBR.room.getMetadata();
+          const updatedMetadata = { 
+            ...currentMetadata, 
+            darqie: { 
+              ...(currentMetadata.darqie || {}), 
+              activeRoll: null 
+            } 
+          };
+          await OBR.room.setMetadata(updatedMetadata);
+          console.log('[DICE] Запит очищено через помилку');
+        } catch (error) {
+          console.error("🎲 [DICE] Error clearing roll request:", error);
+        }
       }
+    } else {
+      console.log('[DICE] Немає кубиків для кидку');
       
-      // Очищаємо запит після виконання
+      // Очищаємо запит якщо немає кубиків
       try {
         const currentMetadata = await OBR.room.getMetadata();
         const updatedMetadata = { 
@@ -60,12 +81,10 @@ export function DiceRollSync() {
           } 
         };
         await OBR.room.setMetadata(updatedMetadata);
-        console.log('[DICE] Запит очищено');
+        console.log('[DICE] Запит очищено - немає кубиків');
       } catch (error) {
         console.error("🎲 [DICE] Error clearing roll request:", error);
       }
-    } else {
-      console.log('[DICE] Немає кубиків для кидку');
     }
   };
   
@@ -151,6 +170,22 @@ export function DiceRollSync() {
           ) {
             changed = true;
             console.log('[DICE] Всі кубики завершили анімацію!');
+            
+            // Очищаємо запит після завершення анімації
+            try {
+              const currentMetadata = await OBR.room.getMetadata();
+              const updatedMetadata = { 
+                ...currentMetadata, 
+                darqie: { 
+                  ...(currentMetadata.darqie || {}), 
+                  activeRoll: null 
+                } 
+              };
+              await OBR.room.setMetadata(updatedMetadata);
+              console.log('[DICE] Запит очищено після завершення анімації');
+            } catch (error) {
+              console.error("🎲 [DICE] Error clearing roll request after completion:", error);
+            }
           }
           prevIds.current = ids;
         }
