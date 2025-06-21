@@ -159,13 +159,18 @@ export const useDiceControlsStore = create<DiceControlsState>()(
           if (targetDie) {
             state.diceCounts[targetDie.id] = 1;
           } else {
-            // Якщо не знайшли набір, спробуємо знайти кубик потрібного типу в поточному наборі
-            const targetDie = state.diceSet.dice.find(die => die.type === type);
-            if (targetDie) {
-              state.diceCounts[targetDie.id] = 1;
-            }
+            console.error("🎲 [DICE] Target die type not found:", type);
           }
-        });
+        } else {
+          console.error("🎲 [DICE] Dice set with style not found:", style);
+          
+          // Якщо не знайшли набір, спробуємо знайти кубик потрібного типу в поточному наборі
+          const targetDie = state.diceSet.dice.find(die => die.type === type);
+          if (targetDie) {
+            state.diceCounts[targetDie.id] = 1;
+          }
+        }
+      });
     },
   }))
 );
