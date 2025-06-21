@@ -172,22 +172,6 @@ export function DiceRollSync() {
           ) {
             changed = true;
             console.log('[DICE] Всі кубики завершили анімацію!');
-            
-            // Очищаємо запит після завершення анімації
-            try {
-              const currentMetadata = await OBR.room.getMetadata();
-              const updatedMetadata = { 
-                ...currentMetadata, 
-                darqie: { 
-                  ...(currentMetadata.darqie || {}), 
-                  activeRoll: null 
-                } 
-              };
-              await OBR.room.setMetadata(updatedMetadata);
-              console.log('[DICE] Запит очищено після завершення анімації');
-            } catch (error) {
-              console.error("🎲 [DICE] Error clearing roll request after completion:", error);
-            }
           }
           prevIds.current = ids;
         }
