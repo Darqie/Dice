@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import OBR from "@owlbear-rodeo/sdk";
 import { DiceTransform } from "../types/DiceTransform";
 import { DiceRoll } from "./DiceRoll";
 import { InteractiveDice } from "./InteractiveDice";
@@ -48,8 +49,6 @@ export function InteractiveDiceRoll() {
         // Це може бути автоматичний кидок - очищаємо запит через невелику затримку
         setTimeout(async () => {
           try {
-            // Імпортуємо OBR динамічно щоб уникнути проблем з типами
-            const OBR = await import("@owlbear-rodeo/sdk");
             const currentMetadata = await OBR.room.getMetadata();
             const darqie = currentMetadata.darqie as any;
             if (darqie && darqie.activeRoll) {
