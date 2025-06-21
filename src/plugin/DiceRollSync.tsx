@@ -1,14 +1,61 @@
 import OBR from "@owlbear-rodeo/sdk";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDiceRollStore } from "../dice/store";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { getPluginId } from "./getPluginId";
 import { getDiceToRoll } from "../controls/store";
 import { useDiceControlsStore } from "../controls/store";
+import { DiceRoll } from "../dice/DiceRoll";
+import { Dice } from "../dice/Dice";
+import { DiceTransform } from "../types/DiceTransform";
+
+// Компонент для автоматичних кидків
+function AutoDiceRoll({ 
+  roll, 
+  onRollFinished 
+}: { 
+  roll: any; 
+  onRollFinished: (id: string, number: number, transform: DiceTransform) => void;
+}) {
+  const rollThrows = useDiceRollStore((state) => state.rollThrows);
+  const finishedTransforms = useDiceRollStore((state) => {
+    const values = Object.values(state.rollTransforms);
+    if (values.some((v) => v === null)) {
+      return undefined;
+    }
+    return state.rollTransforms as Record<string, DiceTransform>;
+  });
+
+  const transformsRef = useRef<Record<string, DiceTransform | null> | null>(null);
+  useEffect(
+    () =>
+      useDiceRollStore.subscribe((state) => {
+        transformsRef.current = state.rollTransforms;
+      }),
+    []
+  );
+
+  if (!roll) {
+    return null;
+  }
+
+  return (
+    <DiceRoll
+      roll={roll}
+      rollThrows={rollThrows}
+      finishedTransforms={finishedTransforms}
+      onRollFinished={onRollFinished}
+      Dice={Dice}
+      transformsRef={transformsRef}
+    />
+  );
+}
 
 /** Sync the current dice roll to the plugin */
 export function DiceRollSync() {
   const prevIds = useRef<string[]>([]);
+  const [autoRoll, setAutoRoll] = useState<any>(null);
+  const [autoRollRequest, setAutoRollRequest] = useState<any>(null);
   
   // Функція для автоматичного виконання кидків
   const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
@@ -65,16 +112,21 @@ export function DiceRollSync() {
       console.log('[DICE] Створено roll об\'єкт:', roll);
       console.log('[DICE] diceToRoll детально:', JSON.stringify(diceToRoll, null, 2));
       
+      // Зберігаємо roll для рендерингу
+      setAutoRoll(roll);
+      setAutoRollRequest(rollRequest);
+      
       // Виконуємо кидок з підвищеною швидкістю (як у звичайному кидку)
       try {
         console.log('[DICE] Тип startRoll:', typeof diceRollState.startRoll);
         console.log('[DICE] startRoll функція:', diceRollState.startRoll);
-        // Використовуємо speedMultiplier = 10 для швидшого завершення анімації
-        diceRollState.startRoll(roll, 10);
-        console.log('[DICE] startRoll викликано успішно з speedMultiplier = 10');
+        // Використовуємо speedMultiplier = 20 для максимально швидкого завершення анімації
+        diceRollState.startRoll(roll, 20);
+        console.log('[DICE] startRoll викликано успішно з speedMultiplier = 20');
         
-        // НЕ очищаємо запит одразу - чекаємо завершення анімації
+        // InteractiveDiceRoll тепер сам очистить запит після завершення анімації
         console.log('[DICE] Чекаємо завершення анімації...');
+        
       } catch (error) {
         console.error('[DICE] Помилка при виклику startRoll:', error);
         
@@ -116,6 +168,34 @@ export function DiceRollSync() {
       } catch (error) {
         console.error("🎲 [DICE] Error clearing roll request:", error);
       }
+    }
+  };
+
+  // Обробник завершення автоматичного кидку
+  const handleAutoRollFinished = async (id: string, number: number, transform: DiceTransform) => {
+    console.log('[DICE] Автоматичний кидок завершено для кубика:', id, 'значення:', number);
+    
+    // Очищаємо запит після завершення анімації
+    try {
+      const currentMetadata = await OBR.room.getMetadata();
+      const darqie = currentMetadata.darqie as any;
+      if (darqie && darqie.activeRoll) {
+        const updatedMetadata = { 
+          ...currentMetadata, 
+          darqie: { 
+            ...darqie, 
+            activeRoll: null 
+          } 
+        };
+        await OBR.room.setMetadata(updatedMetadata);
+        console.log('[DICE] Запит очищено після завершення автоматичного кидку');
+        
+        // Очищаємо стан автоматичного кидку
+        setAutoRoll(null);
+        setAutoRollRequest(null);
+      }
+    } catch (error) {
+      console.error("🎲 [DICE] Error clearing roll request after auto roll completion:", error);
     }
   };
   
@@ -197,25 +277,6 @@ export function DiceRollSync() {
           ) {
             changed = true;
             console.log('[DICE] Всі кубики завершили анімацію!');
-            
-            // Очищаємо запит після завершення анімації
-            try {
-              const currentMetadata = await OBR.room.getMetadata();
-              const darqie = currentMetadata.darqie as any;
-              if (darqie && darqie.activeRoll) {
-                const updatedMetadata = { 
-                  ...currentMetadata, 
-                  darqie: { 
-                    ...darqie, 
-                    activeRoll: null 
-                  } 
-                };
-                await OBR.room.setMetadata(updatedMetadata);
-                console.log('[DICE] Запит очищено після завершення анімації');
-              }
-            } catch (error) {
-              console.error("🎲 [DICE] Error clearing roll request after completion:", error);
-            }
           }
           prevIds.current = ids;
         }
@@ -244,5 +305,15 @@ export function DiceRollSync() {
     []
   );
 
-  return null;
+  return (
+    <>
+      {/* Рендеримо автоматичний кидок якщо він є */}
+      {autoRoll && (
+        <AutoDiceRoll 
+          roll={autoRoll} 
+          onRollFinished={handleAutoRollFinished}
+        />
+      )}
+    </>
+  );
 }
