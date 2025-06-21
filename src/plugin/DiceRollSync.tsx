@@ -105,7 +105,7 @@ export function DiceRollSync() {
   
   useEffect(
     () =>
-      useDiceRollStore.subscribe((state: any) => {
+      useDiceRollStore.subscribe(async (state: any) => {
         let changed = false;
         if (!state.roll) {
           changed = true;
@@ -136,11 +136,16 @@ export function DiceRollSync() {
           const transforms = state.roll?.hidden
             ? undefined
             : state.rollTransforms;
+          
+          // Отримуємо ім'я поточного гравця
+          const currentPlayerName = await OBR.player.getName();
+          
           OBR.player.setMetadata({
             [getPluginId("roll")]: state.roll,
             [getPluginId("rollThrows")]: throws,
             [getPluginId("rollValues")]: values,
             [getPluginId("rollTransforms")]: transforms,
+            [getPluginId("rollPlayer")]: currentPlayerName, // Додаємо ім'я гравця
           });
         }
       }),
