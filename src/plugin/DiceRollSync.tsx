@@ -69,9 +69,9 @@ export function DiceRollSync() {
       try {
         console.log('[DICE] Тип startRoll:', typeof diceRollState.startRoll);
         console.log('[DICE] startRoll функція:', diceRollState.startRoll);
-        // Використовуємо speedMultiplier = 5 для швидшого завершення анімації
-        diceRollState.startRoll(roll, 5);
-        console.log('[DICE] startRoll викликано успішно з speedMultiplier = 5');
+        // Використовуємо speedMultiplier = 10 для швидшого завершення анімації
+        diceRollState.startRoll(roll, 10);
+        console.log('[DICE] startRoll викликано успішно з speedMultiplier = 10');
         
         // НЕ очищаємо запит одразу - чекаємо завершення анімації
         console.log('[DICE] Чекаємо завершення анімації...');
