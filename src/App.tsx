@@ -7,6 +7,7 @@ import { InteractiveTray } from "./tray/InteractiveTray";
 import { Sidebar } from "./controls/Sidebar";
 import { useDiceControlsStore } from "./controls/store";
 import { useDiceRollStore } from "./dice/store";
+import { getDiceToRoll } from "./controls/store";
 
 export function App() {
   const { setupDiceFromRequest } = useDiceControlsStore();
@@ -20,29 +21,13 @@ export function App() {
           
           // Перевіряємо, чи цей запит призначений для поточного гравця
           const currentConnectionId = await OBR.player.getConnectionId();
-          const currentPlayerName = await OBR.player.getName();
-          const currentRole = await OBR.player.getRole();
-          
-          console.log("🎲 [DICE] App: Roll request received:", {
-            requestConnectionId: rollRequest.connectionId,
-            currentConnectionId: currentConnectionId,
-            requestPlayerName: rollRequest.playerName,
-            currentPlayerName: currentPlayerName,
-            currentRole: currentRole,
-            isMatch: rollRequest.connectionId === currentConnectionId
-          });
           
           if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
             // Цей запит не для нас, ігноруємо його
-            console.log("🎲 [DICE] App: Ignoring roll request - not for this player");
             return;
           }
           
-          console.log('[DICE] Roll request:', rollRequest);
-          
           try {
-            await OBR.action.open();
-            
             setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
             
             setTimeout(async () => {
@@ -51,11 +36,33 @@ export function App() {
               const hasDice = Object.values(diceToRoll).some((count: any) => count > 0);
               
               if (hasDice) {
-                console.log("🎲 [DICE] Roll would be executed with:", {
-                  diceCounts: diceToRoll,
-                  bonus: rollRequest.bonus,
-                  style: rollRequest.style
-                });
+                // Виконуємо кидок без відкриття вікна
+                const diceToRollObjects = getDiceToRoll(
+                  currentState.diceCounts,
+                  currentState.diceAdvantage,
+                  currentState.diceById
+                );
+                
+                if (diceToRollObjects.length > 0) {
+                  const roll = {
+                    dice: diceToRollObjects,
+                    bonus: rollRequest.bonus || 0,
+                    hidden: false
+                  };
+                  
+                  // Виконуємо кидок
+                  startRoll(roll);
+                  
+                  // Показуємо результат через сповіщення
+                  const playerName = await OBR.player.getName();
+                  const rollType = rollRequest.type;
+                  const bonus = rollRequest.bonus || 0;
+                  
+                  await OBR.notification.show(
+                    `Кидок ${rollType} +${bonus} виконано!`,
+                    'INFO'
+                  );
+                }
               } else {
                 console.error("🎲 [DICE] No dice configured for roll");
               }
