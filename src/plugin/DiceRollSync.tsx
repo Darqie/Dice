@@ -1,5 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDiceRollStore } from "../dice/store";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { getPluginId } from "./getPluginId";
@@ -10,7 +10,7 @@ export function DiceRollSync() {
   const prevIds = useRef<string[]>([]);
   
   // Функція для автоматичного виконання кидків
-  const executeAutoRoll = async (rollRequest: any) => {
+  const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
     console.log("🎲 [DICE] Executing auto roll with request:", rollRequest);
     
     try {
@@ -57,42 +57,40 @@ export function DiceRollSync() {
   useEffect(() => {
     console.log("🎲 [DICE] DiceRollSync: Waiting for OBR to be ready...");
     
-    const waitForOBR = async () => {
-      try {
-        await OBR.onReady();
-        console.log("🎲 [DICE] DiceRollSync: OBR is ready, setting up room metadata listener");
+    const setupRoomMetadataListener = () => {
+      console.log("🎲 [DICE] DiceRollSync: OBR is ready, setting up room metadata listener");
+      
+      const handleRoomMetadataChange = async (metadata: { darqie?: { activeRoll?: { type: string; style: string; bonus?: number } } }) => {
+        console.log("🎲 [DICE] DiceRollSync: Room metadata changed:", metadata);
         
-        const handleRoomMetadataChange = async (metadata: any) => {
-          console.log("🎲 [DICE] DiceRollSync: Room metadata changed:", metadata);
+        if (metadata.darqie?.activeRoll) {
+          const rollRequest = metadata.darqie.activeRoll;
+          console.log("🎲 [DICE] DiceRollSync: Processing roll request:", rollRequest);
           
-          if (metadata.darqie?.activeRoll) {
-            const rollRequest = metadata.darqie.activeRoll;
-            console.log("🎲 [DICE] DiceRollSync: Processing roll request:", rollRequest);
-            
-            // Налаштовуємо кубики через нову функцію
-            const { useDiceControlsStore } = await import("../controls/store");
-            const diceControlsState = useDiceControlsStore.getState();
-            diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
-            
-            // Виконуємо кидок через невелику затримку
-            setTimeout(() => {
-              executeAutoRoll(rollRequest);
-            }, 1000);
-          }
-        };
-        
-        const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
-        
-        return () => {
-          console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
-          unsubscribe();
-        };
-      } catch (error) {
-        console.error("🎲 [DICE] DiceRollSync: Error waiting for OBR:", error);
-      }
+          // Налаштовуємо кубики через нову функцію
+          const { useDiceControlsStore } = await import("../controls/store");
+          const diceControlsState = useDiceControlsStore.getState();
+          diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
+          
+          // Виконуємо кидок через невелику затримку
+          setTimeout(() => {
+            executeAutoRoll(rollRequest);
+          }, 1000);
+        }
+      };
+      
+      const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
+      
+      return () => {
+        console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
+        unsubscribe();
+      };
     };
     
-    waitForOBR();
+    // Використовуємо OBR.onReady з колбек-функцією
+    OBR.onReady(() => {
+      setupRoomMetadataListener();
+    });
   }, []);
   
   useEffect(
