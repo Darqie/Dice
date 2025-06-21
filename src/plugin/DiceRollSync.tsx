@@ -11,6 +11,8 @@ export function DiceRollSync() {
   
   // Функція для автоматичного виконання кидків
   const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
+    console.log('[DICE] executeAutoRoll викликано:', rollRequest);
+    
     const { useDiceControlsStore } = await import("../controls/store");
     const { useDiceRollStore } = await import("../dice/store");
     
@@ -24,6 +26,8 @@ export function DiceRollSync() {
       diceControlsState.diceById
     );
     
+    console.log('[DICE] diceToRoll:', diceToRoll);
+    
     if (diceToRoll.length > 0) {
       // Створюємо об'єкт кидку
       const roll = {
@@ -34,6 +38,7 @@ export function DiceRollSync() {
       
       // Виконуємо кидок
       diceRollState.startRoll(roll);
+      console.log('[DICE] startRoll викликано');
       
       // Очищаємо запит після виконання
       try {
@@ -46,9 +51,12 @@ export function DiceRollSync() {
           } 
         };
         await OBR.room.setMetadata(updatedMetadata);
+        console.log('[DICE] Запит очищено');
       } catch (error) {
         console.error("🎲 [DICE] Error clearing roll request:", error);
       }
+    } else {
+      console.log('[DICE] Немає кубиків для кидку');
     }
   };
   
@@ -63,14 +71,18 @@ export function DiceRollSync() {
       const handleRoomMetadataChange = async (metadata: { darqie?: { activeRoll?: { type: string; style: string; bonus?: number; connectionId?: string; playerName?: string } } }) => {
         if (metadata.darqie?.activeRoll) {
           const rollRequest = metadata.darqie.activeRoll;
+          console.log('[DICE] Отримано запит на кидок:', rollRequest);
           
           // Перевіряємо, чи цей запит призначений для поточного гравця
           const currentConnectionId = await OBR.player.getConnectionId();
           
           if (rollRequest.connectionId && rollRequest.connectionId !== currentConnectionId) {
             // Цей запит не для нас, ігноруємо його
+            console.log('[DICE] Запит не для поточного гравця, ігноруємо');
             return;
           }
+          
+          console.log('[DICE] Запит для поточного гравця, обробляємо');
           
           // Налаштовуємо кубики через нову функцію
           const { useDiceControlsStore } = await import("../controls/store");
