@@ -137,7 +137,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
           console.log('[CONTROLS] Додано кубик до поточного набору:', targetDie.type, targetDie.id);
         } else {
           console.error("🎲 [DICE] Target die type not found in current set:", type);
-          
           // Якщо не знайшли в поточному наборі, спробуємо знайти набір з потрібним стилем
           const targetDiceSet = diceSets.find(set => 
             set.dice.some(die => die.style === style)
