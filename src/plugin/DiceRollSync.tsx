@@ -41,6 +41,8 @@ export function DiceRollSync() {
       
       // Виконуємо кидок
       try {
+        console.log('[DICE] Тип startRoll:', typeof diceRollState.startRoll);
+        console.log('[DICE] startRoll функція:', diceRollState.startRoll);
         diceRollState.startRoll(roll);
         console.log('[DICE] startRoll викликано успішно');
       } catch (error) {
