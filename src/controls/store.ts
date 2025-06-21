@@ -120,8 +120,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     setupDiceFromRequest(type, style, bonus) {
-      console.log("🎲 [DICE] Setting up dice from request:", { type, style, bonus });
-      
       set((state) => {
         // Скидаємо поточний стан
         state.diceCounts = state.defaultDiceCounts;
@@ -135,8 +133,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
         );
         
         if (targetDiceSet) {
-          console.log("🎲 [DICE] Found dice set with style:", style);
-          
           // Змінюємо набір кубиків
           const counts: DiceCounts = {};
           const prevCounts = state.diceCounts;
@@ -161,22 +157,15 @@ export const useDiceControlsStore = create<DiceControlsState>()(
           // Знаходимо кубик потрібного типу і додаємо його
           const targetDie = targetDiceSet.dice.find(die => die.type === type);
           if (targetDie) {
-            console.log("🎲 [DICE] Found target die:", targetDie);
             state.diceCounts[targetDie.id] = 1;
           } else {
-            console.error("🎲 [DICE] Target die type not found:", type);
+            // Якщо не знайшли набір, спробуємо знайти кубик потрібного типу в поточному наборі
+            const targetDie = state.diceSet.dice.find(die => die.type === type);
+            if (targetDie) {
+              state.diceCounts[targetDie.id] = 1;
+            }
           }
-        } else {
-          console.error("🎲 [DICE] Dice set with style not found:", style);
-          
-          // Якщо не знайшли набір, спробуємо знайти кубик потрібного типу в поточному наборі
-          const targetDie = state.diceSet.dice.find(die => die.type === type);
-          if (targetDie) {
-            console.log("🎲 [DICE] Using current dice set, found target die:", targetDie);
-            state.diceCounts[targetDie.id] = 1;
-          }
-        }
-      });
+        });
     },
   }))
 );
