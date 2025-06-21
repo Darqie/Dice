@@ -1,14 +1,16 @@
 import OBR from "@owlbear-rodeo/sdk";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDiceRollStore } from "../dice/store";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { getPluginId } from "./getPluginId";
 import { getDiceToRoll } from "../controls/store";
 import { useDiceControlsStore } from "../controls/store";
+import { InteractiveDiceRoll } from "../dice/InteractiveDiceRoll";
 
 /** Sync the current dice roll to the plugin */
 export function DiceRollSync() {
   const prevIds = useRef<string[]>([]);
+  const [autoRollRequest, setAutoRollRequest] = useState<{ type: string; style: string; bonus?: number } | null>(null);
   
   // Функція для автоматичного виконання кидків
   const executeAutoRoll = async (rollRequest: { type: string; style: string; bonus?: number }) => {
@@ -19,6 +21,9 @@ export function DiceRollSync() {
     
     console.log('[DICE] diceControlsState:', diceControlsState);
     console.log('[DICE] diceRollState:', diceRollState);
+    
+    // Налаштовуємо кубики через нову функцію
+    diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus || 0);
     
     // Отримуємо кубики для кидку
     const diceToRoll = getDiceToRoll(
@@ -47,6 +52,9 @@ export function DiceRollSync() {
         // Використовуємо speedMultiplier = 5 для швидшого завершення анімації
         diceRollState.startRoll(roll, 5);
         console.log('[DICE] startRoll викликано успішно з speedMultiplier = 5');
+        
+        // Встановлюємо запит для рендерингу InteractiveDiceRoll
+        setAutoRollRequest(rollRequest);
         
         // НЕ очищаємо запит одразу - чекаємо завершення анімації
         console.log('[DICE] Чекаємо завершення анімації...');
@@ -114,10 +122,6 @@ export function DiceRollSync() {
           
           console.log('[DICE] Запит для поточного гравця, обробляємо');
           
-          // Налаштовуємо кубики через нову функцію
-          const diceControlsState = useDiceControlsStore.getState();
-          diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus || 0);
-          
           // Виконуємо кидок через невелику затримку
           setTimeout(() => {
             executeAutoRoll(rollRequest);
@@ -156,6 +160,11 @@ export function DiceRollSync() {
         if (!state.roll) {
           changed = true;
           prevIds.current = [];
+          // Очищаємо автоматичний запит коли кидок завершено
+          if (autoRollRequest) {
+            setAutoRollRequest(null);
+            console.log('[DICE] Автоматичний запит очищено');
+          }
         } else {
           const ids = getDieFromDice(state.roll).map((die) => die.id);
           // Check array length for early change check
@@ -216,8 +225,13 @@ export function DiceRollSync() {
           });
         }
       }),
-    []
+    [autoRollRequest]
   );
+
+  // Рендеримо InteractiveDiceRoll для автоматичних кидків
+  if (autoRollRequest) {
+    return <InteractiveDiceRoll />;
+  }
 
   return null;
 }
