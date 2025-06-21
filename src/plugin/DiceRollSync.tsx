@@ -125,6 +125,12 @@ export function DiceRollSync() {
   useEffect(
     () =>
       useDiceRollStore.subscribe(async (state: any) => {
+        console.log('[DICE] Store змінився:', { 
+          hasRoll: !!state.roll, 
+          rollValuesCount: Object.keys(state.rollValues).length,
+          rollValues: state.rollValues 
+        });
+        
         let changed = false;
         if (!state.roll) {
           changed = true;
