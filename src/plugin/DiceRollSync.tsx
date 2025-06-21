@@ -127,7 +127,8 @@ export function DiceRollSync() {
         console.log('[DICE] Store змінився:', { 
           hasRoll: !!state.roll, 
           rollValuesCount: Object.keys(state.rollValues).length,
-          rollValues: state.rollValues 
+          rollValues: state.rollValues,
+          hasFinishDieRoll: typeof state.finishDieRoll === 'function'
         });
         
         let changed = false;
@@ -149,6 +150,7 @@ export function DiceRollSync() {
             Object.values(state.rollValues).every((value) => value !== null)
           ) {
             changed = true;
+            console.log('[DICE] Всі кубики завершили анімацію!');
           }
           prevIds.current = ids;
         }
