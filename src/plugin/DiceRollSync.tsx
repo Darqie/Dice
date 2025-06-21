@@ -38,13 +38,15 @@ export function DiceRollSync() {
       };
       
       console.log('[DICE] Створено roll об\'єкт:', roll);
+      console.log('[DICE] diceToRoll детально:', JSON.stringify(diceToRoll, null, 2));
       
-      // Виконуємо кидок
+      // Виконуємо кидок з підвищеною швидкістю (як у звичайному кидку)
       try {
         console.log('[DICE] Тип startRoll:', typeof diceRollState.startRoll);
         console.log('[DICE] startRoll функція:', diceRollState.startRoll);
-        diceRollState.startRoll(roll);
-        console.log('[DICE] startRoll викликано успішно');
+        // Використовуємо speedMultiplier = 5 для швидшого завершення анімації
+        diceRollState.startRoll(roll, 5);
+        console.log('[DICE] startRoll викликано успішно з speedMultiplier = 5');
         
         // НЕ очищаємо запит одразу - чекаємо завершення анімації
         console.log('[DICE] Чекаємо завершення анімації...');
