@@ -60,6 +60,12 @@ export function DiceRollSync() {
     const setupRoomMetadataListener = () => {
       console.log("🎲 [DICE] DiceRollSync: OBR is ready, setting up room metadata listener");
       
+      // Перевіряємо чи OBR готовий перед підпискою
+      if (!OBR.isAvailable) {
+        console.log("🎲 [DICE] DiceRollSync: OBR not available yet");
+        return;
+      }
+      
       const handleRoomMetadataChange = async (metadata: { darqie?: { activeRoll?: { type: string; style: string; bonus?: number } } }) => {
         console.log("🎲 [DICE] DiceRollSync: Room metadata changed:", metadata);
         
@@ -79,12 +85,16 @@ export function DiceRollSync() {
         }
       };
       
-      const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
-      
-      return () => {
-        console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
-        unsubscribe();
-      };
+      try {
+        const unsubscribe = OBR.room.onMetadataChange(handleRoomMetadataChange);
+        
+        return () => {
+          console.log("🎲 [DICE] DiceRollSync: Unsubscribing from room metadata");
+          unsubscribe();
+        };
+      } catch (error) {
+        console.error("🎲 [DICE] DiceRollSync: Error setting up metadata listener:", error);
+      }
     };
     
     // Використовуємо OBR.onReady з колбек-функцією
