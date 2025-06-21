@@ -70,7 +70,7 @@ export function DiceRollSync() {
           // Налаштовуємо кубики через нову функцію
           const { useDiceControlsStore } = await import("../controls/store");
           const diceControlsState = useDiceControlsStore.getState();
-          diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus);
+          diceControlsState.setupDiceFromRequest(rollRequest.type, rollRequest.style, rollRequest.bonus || 0);
           
           // Виконуємо кидок через невелику затримку
           setTimeout(() => {
