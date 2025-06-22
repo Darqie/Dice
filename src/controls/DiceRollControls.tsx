@@ -24,6 +24,48 @@ import { DiceType } from "../types/DiceType";
 import { useDiceHistoryStore } from "./history";
 import { Die } from "../types/Die";
 
+// Глобальна функція для програмного запуску кидка
+declare global {
+  interface Window {
+    triggerDiceRoll: () => void;
+  }
+}
+
+// Експортуємо функцію для програмного запуску кидка
+export function createProgrammaticRollTrigger() {
+  return () => {
+    const startRoll = useDiceRollStore.getState().startRoll;
+    const pushRecentRoll = useDiceHistoryStore.getState().pushRecentRoll;
+    const resetDiceCounts = useDiceControlsStore.getState().resetDiceCounts;
+    const setBonus = useDiceControlsStore.getState().setDiceBonus;
+    const setAdvantage = useDiceControlsStore.getState().setDiceAdvantage;
+    
+    const counts = useDiceControlsStore.getState().diceCounts;
+    const diceById = useDiceControlsStore.getState().diceById;
+    const hidden = useDiceControlsStore.getState().diceHidden;
+    const bonus = useDiceControlsStore.getState().diceBonus;
+    const advantage = useDiceControlsStore.getState().diceAdvantage;
+    
+    const dice = getDiceToRoll(counts, advantage, diceById);
+    const speedMultiplier = 1;
+    
+    startRoll({ dice, bonus, hidden }, speedMultiplier);
+    
+    const rolledDiceById: Record<string, Die> = {};
+    for (const id of Object.keys(counts)) {
+      if (!(id in rolledDiceById)) {
+        rolledDiceById[id] = diceById[id];
+      }
+    }
+    pushRecentRoll({ advantage, counts, bonus, diceById: rolledDiceById });
+    
+    // Очищаємо після кидка
+    resetDiceCounts();
+    setBonus(0);
+    setAdvantage(null);
+  };
+}
+
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
 25% { transform: translate(2px, 2px) rotate(2deg); }
