@@ -9,6 +9,15 @@ declare var __dirname: string;
 export default defineConfig({
   plugins: [react()],
   assetsInclude: ["**/*.glb", "**/*.hdr"],
+  server: {
+    host: '0.0.0.0',
+    port: 5173, // Dice-main буде на порту 5173
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+    },
+  },
   build: {
     rollupOptions: {
       input: {
