@@ -10,7 +10,9 @@ export function PluginGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (OBR.isAvailable) {
-      OBR.onReady(() => setReady(true));
+      OBR.onReady(() => {
+        setReady(true);
+      });
     }
   }, []);
 

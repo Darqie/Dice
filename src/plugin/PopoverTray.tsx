@@ -34,7 +34,7 @@ export function PopoverTray({
 
   const hidden = !diceRoll || diceRoll.hidden;
 
-  const [timedOut, setTimedOut] = useState(finishedRolling);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     if (finishedRolling) {
@@ -50,6 +50,7 @@ export function PopoverTray({
   }, [finishedRolling]);
 
   const shown = !hidden && !timedOut;
+  
   useEffect(() => {
     if (shown) {
       onToggle(player.connectionId, true);
